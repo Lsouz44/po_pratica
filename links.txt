@@ -1,0 +1,12 @@
+FIPE API HTTP REST
+https://deividfortuna.github.io/fipe/
+
+FIPE API JSON
+https://github.com/giovanigenerali/fipe-json
+
+FIPE CRAWLER
+https://github.com/rafaelgou/fipe-crawler
+
+FIPE - MANIPULAÇÃO
+https://www.linkedin.com/pulse/tabela-fipe-manipulação-de-dados-vagner-bessa/?originalSubdomain=pt
+https://github.com/bessavagner/fipe-carros-outubro2022
