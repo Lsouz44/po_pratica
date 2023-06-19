@@ -1,73 +1,54 @@
 import pandas as pd
 from pulp import *
 
-# Carregar os dados do arquivo Excel
-dados_carros = pd.read_excel('dados_carros.xlsx')
+# Carregar os dados do arquivo .xlsx
+df = pd.read_excel('dados_carros.xlsx')
+
+# Definir as restrições e a função objetivo
+combustiveis = ['Gasolina', 'Diesel', 'Álcool']
+cambios = ['manual', 'automatic']
+Pmin = 0  # Definir o valor mínimo de preço
+Pmax = 9999999  # Definir o valor máximo de preço
+ano_min = 2015  # Definir o ano mínimo de fabricação
+potencia_max = 2.0  # Definir a potência máxima
+
+# Filtrar os dados com base nas restrições definidas
+filtered_df = df[
+    (df['combustivel'].isin(combustiveis)) &
+    (df['cambio'].isin(cambios)) &
+    (df['preco_medio'] >= Pmin) &
+    (df['preco_medio'] <= Pmax) &
+    (df['ano'] >= ano_min) &
+    (df['tamanho_motor'] <= potencia_max)
+]
 
 # Criar o problema de maximização
-problema = LpProblem("Seleção de Carros", LpMaximize)
+prob = LpProblem("EncontrarMelhorCarro", LpMaximize)
 
 # Variáveis de decisão
-carros = list(dados_carros.index)
-selecionado = LpVariable.dicts("Selecionado", carros, cat='Binary')
+carros = list(filtered_df.index)
+carro_var = LpVariable.dicts("Carro", carros, cat='Binary')
 
 # Função objetivo
-problema += lpSum(selecionado[carro] * dados_carros.loc[carro, 'tamanho_motor']
-                  for carro in carros), "Potência_Total"
+prob += lpSum(filtered_df.loc[carro, 'tamanho_motor'] * carro_var[carro] for carro in carros)
 
 # Restrições
-combustivel_especifico = 'Diesel'  # Defina o combustível desejado aqui
-cambio_especifico = 'manual'  # Defina o tipo de câmbio desejado aqui
-faixa_preco_min = 10000  # Defina a faixa de preço mínima aqui
-faixa_preco_max = 50000  # Defina a faixa de preço máxima aqui
-ano_fabricacao_min = 2015  # Defina o ano de fabricação mínimo aqui
-potencia_max = 2.0  # Defina a potência máxima aqui
-marca_especifica = ''  # Defina a marca desejada aqui (deixe em branco para buscar todas as marcas)
-
 for carro in carros:
-    # Restrição de combustível
-    if dados_carros.loc[carro, 'combustivel'] != combustivel_especifico and combustivel_especifico != 'Qualquer':
-        problema += selecionado[carro] == 0
-
-    # Restrição de câmbio
-    if dados_carros.loc[carro, 'cambio'] != cambio_especifico and cambio_especifico != 'Ambos':
-        problema += selecionado[carro] == 0
-
-    # Restrição de faixa de preço
-    if dados_carros.loc[carro, 'preco_medio'] < faixa_preco_min or dados_carros.loc[carro, 'preco_medio'] > faixa_preco_max:
-        problema += selecionado[carro] == 0
-
-    # Restrição de ano de fabricação
-    if dados_carros.loc[carro, 'ano'] < ano_fabricacao_min:
-        problema += selecionado[carro] == 0
-
-    # Restrição de potência
-    if dados_carros.loc[carro, 'tamanho_motor'] > potencia_max:
-        problema += selecionado[carro] == 0
-
-    # Restrição de marca
-    if marca_especifica != '' and dados_carros.loc[carro, 'marca'] != marca_especifica:
-        problema += selecionado[carro] == 0
-
-# Restrição de modelos diferentes com o mesmo nome
-modelos_selecionados = []
-for carro in carros:
-    modelo = dados_carros.loc[carro, 'modelo']
-    if modelo in modelos_selecionados:
-        problema += selecionado[carro] == 0
-    else:
-        modelos_selecionados.append(modelo)
+    prob += carro_var[carro] <= 1  # Restrição para evitar repetição do mesmo modelo
 
 # Resolver o problema
-problema.solve()
+prob.solve()
 
-# Extrair os resultados
-resultados = []
-for carro in carros:
-    if selecionado[carro].varValue == 1:
-        resultados.append(carro)
-
-# Mostrar os 5 melhores carros selecionados
+# Imprimir os resultados
+print("Status:", LpStatus[prob.status])
+print("-----")
 print("Os 5 melhores carros:")
-for i, carro in enumerate(resultados[:5]):
-    print(f"{i+1}. {dados_carros.loc[carro, 'marca']} {dados_carros.loc[carro, 'modelo']}, Potência: {dados_carros.loc[carro, 'tamanho_motor']}, Preço Médio: {dados_carros.loc[carro, 'preco_medio']}")
+for carro in carros:
+    if carro_var[carro].value() == 1:
+        print(f"Carro: {filtered_df.loc[carro, 'marca']} {filtered_df.loc[carro, 'modelo']}")
+        print(f"Combustível: {filtered_df.loc[carro, 'combustivel']}")
+        print(f"Câmbio: {filtered_df.loc[carro, 'cambio']}")
+        print(f"Potência: {filtered_df.loc[carro, 'tamanho_motor']}")
+        print(f"Ano: {filtered_df.loc[carro, 'ano']}")
+        print(f"Preço Médio: {filtered_df.loc[carro, 'preco_medio']}")
+        print("-----")
