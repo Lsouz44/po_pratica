@@ -5,11 +5,12 @@ from pulp import LpMaximize, LpProblem, LpStatus, lpSum, LpVariable
 dados_carros = pd.read_excel('~/Documentos/po_pratica/tabela_nova.xlsx')
 
 # definir as restrições fornecidas pelo usuário
-combustivel_restricao = 'Gasolina'
-cambio_restricao = 'manual'
-faixa_preco_restricao = (10000, 90000)
-ano_fabricacao_restricao = 2015
-potencia_max_restricao = 2.0
+combustivel_restricao = str(input("\n\nEscolha o combustível desejado (Gasolina, Diesel ou Álcool): "))
+cambio_restricao = str(input("\nEsolha o câmbio desejado (manual ou automatic): "))
+faixa_preco_restricao = [float(input("\nInforme o preço mínimo do carro: ")),
+                         float(input("\nInforme o preço máximo: "))]
+ano_fabricacao_restricao = int(input("\nInforme o ano mínimo de fabricação: "))
+potencia_max_restricao = float(input("\nInforme a potência máxima desejada: "))
 
 # criar o problema de otimização
 problema = LpProblem("Otimizacao_Carros", LpMaximize)
